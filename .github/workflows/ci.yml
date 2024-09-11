@@ -1,0 +1,51 @@
+name: Continue Intergration Workflow
+
+# Trigger
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'web/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'web/**'
+
+jobs:
+  # Run unit test
+  test:
+    name: 'Run unit test'
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        name: 'Checkout repository'
+
+      - name: 'Install Dependencies'
+        run: npm install
+
+      - name: 'Run Tests'
+        run: npm run test
+
+  # Run the linter
+  lint:
+    name: 'Run linter'
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./web
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      name: 'Checkout repository'
+
+    - name: 'Install Dependencies'
+      run: npm install
+
+    - name: 'Run Linter'
+      run: npx standard -v
