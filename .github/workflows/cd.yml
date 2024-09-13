@@ -1,0 +1,94 @@
+name: Continue Delivery Workflow
+
+# ==============================================================================
+# Trigger
+# ==============================================================================
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'web/**'
+  workfow_dispatch:
+
+
+# ==============================================================================
+# Default for all jobs
+# ==============================================================================
+defaults:
+  run:
+    shell: bash
+    working-directory: ./web
+
+
+# ==============================================================================
+# Jobs details
+# ==============================================================================
+
+jobs:
+  # ==============================================================================
+  # Deploy the main branch to staging environment
+  # ==============================================================================
+  deploy_staging:
+    environment: staging
+    name: 'Deploy to staging environment'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v2
+
+      - name: 'Deploy to staging'
+        uses: burnett01/rsync-deployments@23a557dceb19f9bb960ef40cf75cab5e9b37ec1f
+        with:
+          switchs: -avzr --delete
+          path: ./web
+          remote_path: /var/app
+          remote_host: ${{ secrets.HOSTNAME }}
+          remote_user: ${{ secrets.REMOTE_USER }}
+          remote_key: ${{ secrets.SSH_PIRVATE_KEY }}
+
+      - name: 'Execute SSH commmands on remote server'
+        uses: JimCronqvist/action-ssh@7737f1192ddd8376686e9d6354dea44592c942bf
+        with:
+          hosts: '${{ secrets.REMOTE_USER }}@{{ secrets.HOSTNAME }}'
+          privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
+          command: |
+            cd /var/app/web
+            npm ci
+            pm2 start /var/app/web/bin/www || pm2 restart /var/app/web/bin/www
+            sudo service nginx restart
+
+
+  # ==============================================================================
+  # Deploy the main branch to production environment                                    # ==============================================================================
+  deploy_production:
+    environment: production
+    name: 'Deploy to production'
+    runs-on: ubuntu-latest
+    needs: deploy_staging
+    
+    steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v2
+
+      - name: 'Deploy to production'
+        uses: burnett01/rsync-deployments@23a557dceb19f9bb960ef40cf75cab5e9b37ec1f
+        with:
+          switches: -avzr -delete
+          path: ./web
+          remote_path: /var/app
+          remote_host: ${{ secrets.HOSTNAME }}
+          remote_user: ${{ secrets.REMOTE_USER }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+    
+      - name: Execute SSH commmands on remote server
+        uses: JimCronqvist/action-ssh@7737f1192ddd8376686e9d6354dea44592c942bf
+        with:
+          hosts: '${{ secrets.REMOTE_USER }}@${{ secrets.HOSTNAME }}'
+          privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
+          command: |
+            cd /var/app/web
+            npm ci
+            pm2 start /var/app/web/bin/www || pm2 restart /var/app/web/bin/www
+            sudo service nginx restart
