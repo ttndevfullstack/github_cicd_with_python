@@ -17,4 +17,15 @@ router.get('/ice-flakes', function (req, res, next) {
     })
 })
 
+/* GET home profile. */
+router.get('/user', function (req, res, next) {
+  res
+    .status(201)
+    .json({
+      id: 1,
+      name: 'Admin System',
+      role: 'Admin'
+    })
+})
+
 module.exports = router
