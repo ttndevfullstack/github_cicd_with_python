@@ -22,7 +22,7 @@ router.get('/user', function (req, res, next) {
   res
     .status(201)
     .json({
-      id: 1,
+      id: 2,
       name: 'Admin System',
       role: 'Admin'
     })
