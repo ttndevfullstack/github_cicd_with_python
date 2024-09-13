@@ -61,7 +61,8 @@ jobs:
 
 
   # ==============================================================================
-  # Deploy the main branch to production environment                                    # ==============================================================================
+  # Deploy the main branch to production environment                                    
+  # ==============================================================================
   deploy_production:
     environment: production
     name: 'Deploy to production'
